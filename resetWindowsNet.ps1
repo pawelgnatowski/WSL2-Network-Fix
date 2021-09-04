@@ -12,28 +12,29 @@ function ConfigureWSLNetwork {
     $wslStatus = Get-Process -Name "wsl" -ErrorAction SilentlyContinue
     if (!($wslStatus)) {
         Start-Job -ScriptBlock { Start-Process -FilePath "wsl.exe" -WindowStyle hidden }
-       
-        Do {
+    }   
     
-            $wslStatus = Get-Process -Name "wsl" -ErrorAction SilentlyContinue
-        
-            If (!($wslStatus)) { Write-Output 'Waiting for WSL2 process to start' >> $logPath ; Start-Sleep 1 }
-            
-            Else { Write-Output 'WSL Process has started, configuring network' >> $logPath ; $wslStarted = $true }
-        
-        }
-        Until ( $wslStarted )
+    Do {
 
-        $wslStatus 5>> $logPath
+        $wslStatus = Get-Process -Name "wsl" -ErrorAction SilentlyContinue
+    
+        If (!($wslStatus)) { Write-Output 'Waiting for WSL2 process to start' >> $logPath ; Start-Sleep 1 }
         
-        # run the script on linux machine (must set +x flag on the file)
-        Start-Process -FilePath "wsl.exe" -ArgumentList "-u root /home/p/wslNet.sh" >> $logPath
-        Write-Output "network configuration completed" >> $logPath
-       
-        Write-Output $wslStatus 5>> $logPath
-        
-        return 0
+        Else { Write-Output 'WSL Process has started, configuring network' >> $logPath ; $wslStarted = $true }
+    
     }
+    Until ( $wslStarted )
+
+    $wslStatus 5>> $logPath
+    
+    # wsl --distribution Ubuntu-20.04 -u root /home/p/wslNet.sh
+    Start-Process -FilePath "wsl.exe" -ArgumentList "-u root /home/p/wslNet.sh"
+    Write-Output "network configuration completed" >> $logPath
+    
+    Write-Output $wslStatus 5>> $logPath
+    
+    return 0
+    
     
 }
 
