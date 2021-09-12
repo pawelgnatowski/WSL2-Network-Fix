@@ -3,6 +3,7 @@
 # let's check how boot process is going to be
 $global:logPath = "C:\Startup\wsl2_boot.log"
 
+# TODO: configureWSL2Net set global variable with path to shell script to configure WSL network interface inside Linux
 # this function is used to configure network settings after VMSwitch is ready to be used by wsl instance
 function ConfigureWSLNetwork {
 
@@ -27,8 +28,9 @@ function ConfigureWSLNetwork {
 
     $wslStatus 5>> $logPath
     
-    # wsl --distribution Ubuntu-20.04 -u root /home/p/wslNet.sh
-    Start-Process -FilePath "wsl.exe" -ArgumentList "-u root /home/p/wslNet.sh"
+    # wsl --distribution Ubuntu-20.04 -u root /home/p/configureWSL2Net.sh
+    # configureWSL2Net.sh needs to be made executable
+    Start-Process -FilePath "wsl.exe" -ArgumentList "-u root /home/p/configureWSL2Net.sh"
     Write-Output "network configuration completed" >> $logPath
     
     Write-Output $wslStatus 5>> $logPath
