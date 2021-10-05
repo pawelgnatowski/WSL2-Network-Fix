@@ -47,15 +47,15 @@ wsl exit
 wsl -l -v *>> $logPath
 
 $started = $false
-$err = @() 
+$err = @()
 
 Do {
     $status = Get-VMSwitch WSL -ErrorAction SilentlyContinue -ErrorVariable +err
     Write-Output $status >> $logPath
-    If ($err[0] -match 'do not have required permission') { Write-Output $err >> $logPath; throw $err }
+    If ($err[0] -match "do not have the required permission") { Write-Output $err >> $logPath; throw $err }
     If ($err.count -eq 10) {Write-Output '*** Error No WSL VM switch after 10 attempts' >> $logPath; throw $err}
 
-    If (!($status)) { Write-Output 'Waiting for WSL swtich to get registered' ; Start-Sleep 1 }
+    If (!($status)) { Write-Output 'Waiting for WSL swtich to get registered ', $err.count ; Start-Sleep 1 }
     Else {
         Write-Output  "WSL Network found" ; 
         $started = $true; 
