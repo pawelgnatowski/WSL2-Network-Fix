@@ -51,7 +51,7 @@ $err = @()
 
 Do {
     $status = Get-VMSwitch WSL -ErrorAction SilentlyContinue -ErrorVariable +err
-    Write-Output $status >> $logPath
+    Write-Output "Get-VMSwitch status: $status" >> $logPath
     If ($err[0] -match "do not have the required permission") { Write-Output $err >> $logPath; throw $err }
     If ($err.count -eq 10) {Write-Output '*** Error No WSL VM switch after 10 attempts' >> $logPath; throw $err}
 
@@ -61,9 +61,22 @@ Do {
         $started = $true; 
         # manipulate network adapter tickboxes - Adapter cannot be bound because binding to Hyper-V is still there after M$ windows restarts.
         # Get-NetAdapterBinding Ethernet to view components of the interface vms_pp is what we look for
+        # Set-NetAdapterBinding -Name "Ethernet" -ComponentID vms_pp -Enabled $False ;
+
+        # identify non-virtual adapters with active network connection
+        $active = Get-CimInstance -ClassName Win32_NetworkAdapter | 
+            Select-Object -Property * |
+            Where-Object NetConnectionStatus -eq 2 | 
+            Where-Object Name -NotMatch 'Virtual' ;
         
-        Set-NetAdapterBinding -Name "Ethernet" -ComponentID vms_pp -Enabled $False ;
-        Set-VMSwitch WSL -NetAdapterName "Ethernet" ;
+        # Disable the vm adapter bound to active connection.
+        ## Set-NetAdapterBinding -Name "Ethernet" -ComponentID vms_pp -Enabled $False ;
+        # the 'Name' properties across Cim and Get-Net don't match each other, 
+        # we are assuming Cim 'NetConnectionID' and Get-Net 'InterfaceAlias' are reliably synonymous
+        Set-NetAdapterBinding -InterfaceAlias $active.NetConnectionID -ComponentID vms_pp -Enabled $False ;
+
+        #Set-VMSwitch WSL -NetAdapterName "Ethernet" ;
+        Set-VMSwitch WSL -NetAdapterName $active.NetConnectionID ;
         $started = $true ;
         # Hook all Hyper V VMs to WSL network => avoid network performance issues.
         Write-Output  "Getting all Hyper V machines to use WSL Switch" >> $logPath ; 
