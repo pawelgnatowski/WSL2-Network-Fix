@@ -10,14 +10,14 @@ function ConfigureWSLNetwork {
      
     Write-Output "Starting WSL..." >> $logPath
     
-    $wslStatus = Get-Process -Name "wsl" -ErrorAction Continue
+    $wslStatus = Get-Process -Name "wsl" -ErrorAction Inquire
     if (!($wslStatus)) {
         Start-Job -ScriptBlock { Start-Process -FilePath "wsl.exe" -WindowStyle hidden }
     }   
     
     Do {
 
-        $wslStatus = Get-Process -Name "wsl" -ErrorAction Continue
+        $wslStatus = Get-Process -Name "wsl" -ErrorAction Inquire
     
         If (!($wslStatus)) { Write-Output 'Waiting for WSL2 process to start' >> $logPath ; Start-Sleep 1 }
         
@@ -65,7 +65,7 @@ Do {
 
         # identify non-virtual adapters with active network connection
         # $active[0] will be 1st net adapter in list while $active.[-1] will be last one
-        $active = Get-NetAdapter | Where-Object Status -eq up | Where-Object Name -NotMatch 'Virtual' ;
+        $active = Get-NetAdapter | Where-Object Status -eq up | Where-Object InterfaceDescription -NotMatch 'Virtual' ;
   
         # Disable the vm adapter bound to active connection.
         ## Set-NetAdapterBinding -Name "Ethernet" -ComponentID vms_pp -Enabled $False ;
@@ -78,6 +78,7 @@ Do {
         Write-Output  "Getting all Hyper V machines to use WSL Switch" >> $logPath ; 
         Get-VM | Get-VMNetworkAdapter | Connect-VMNetworkAdapter -SwitchName "WSL" ; 
         # now that host network is configured we can set up wsl network
+        Pause
         ConfigureWSLNetwork ;
         # Start All Hyper VMs
         Get-VM | Start-VM ;
