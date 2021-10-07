@@ -65,7 +65,8 @@ Do {
 
         # identify non-virtual adapters with active network connection
         # $active[0] will be 1st net adapter in list while $active.[-1] will be last one
-        $active = Get-NetAdapter | Where-Object Status -eq up | Where-Object InterfaceDescription -NotMatch 'Virtual' ;
+        $active = Get-NetAdapter | Where-Object Status -eq up | Where-Object InterfaceDescription -NotMatch 'Virtual' |
+            Where-Object Name -NotMatch 'Bridge' ;
   
         # Disable the vm adapter bound to active connection.
         ## Set-NetAdapterBinding -Name "Ethernet" -ComponentID vms_pp -Enabled $False ;
