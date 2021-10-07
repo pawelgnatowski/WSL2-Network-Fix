@@ -57,7 +57,7 @@ Do {
 
     If (!($status)) { Write-Output 'Waiting for WSL swtich to get registered ', $err.count ; Start-Sleep 1 }
     Else {
-        Write-Output  "WSL Network found" ; 
+        Write-Output  "WSL Network found: $status" ; 
         $started = $true; 
         # manipulate network adapter tickboxes - Adapter cannot be bound because binding to Hyper-V is still there after M$ windows restarts.
         # Get-NetAdapterBinding Ethernet to view components of the interface vms_pp is what we look for
@@ -74,6 +74,12 @@ Do {
 
         #Set-VMSwitch WSL -NetAdapterName "Ethernet" ;
         Set-VMSwitch WSL -NetAdapterName $active[0].Name ;
+
+        # Cycle the adapter state to ensure connection still active, mitigates Issue #8: No network after Set-VMSwitch WSL ...
+        # https://github.com/pawelgnatowski/WSL2-Network-Fix/issues/8
+        Disable-NetAdapter  -Name $active[0].Name -Confirm:$false ;
+        Enable-NetAdapter -Name $active[0].Name ;
+
         $started = $true ;
         # Hook all Hyper V VMs to WSL network => avoid network performance issues.
         Write-Output  "Getting all Hyper V machines to use WSL Switch" >> $logPath ; 
