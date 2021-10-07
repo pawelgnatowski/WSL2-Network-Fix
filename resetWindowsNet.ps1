@@ -64,19 +64,15 @@ Do {
         # Set-NetAdapterBinding -Name "Ethernet" -ComponentID vms_pp -Enabled $False ;
 
         # identify non-virtual adapters with active network connection
-        $active = Get-CimInstance -ClassName Win32_NetworkAdapter | 
-            Select-Object -Property * |
-            Where-Object NetConnectionStatus -eq 2 | 
-            Where-Object Name -NotMatch 'Virtual' ;
-        
+        # $active[0] will be 1st net adapter in list while $active.[-1] will be last one
+        $active = Get-NetAdapter | Where-Object Status -eq up | Where-Object Name -NotMatch 'Virtual' ;
+  
         # Disable the vm adapter bound to active connection.
         ## Set-NetAdapterBinding -Name "Ethernet" -ComponentID vms_pp -Enabled $False ;
-        # the 'Name' properties across Cim and Get-Net don't match each other, 
-        # we are assuming Cim 'NetConnectionID' and Get-Net 'InterfaceAlias' are reliably synonymous
-        Set-NetAdapterBinding -InterfaceAlias $active.NetConnectionID -ComponentID vms_pp -Enabled $False ;
+        Set-NetAdapterBinding -Name $active[0].Name -ComponentID vms_pp -Enabled $False ;
 
         #Set-VMSwitch WSL -NetAdapterName "Ethernet" ;
-        Set-VMSwitch WSL -NetAdapterName $active.NetConnectionID ;
+        Set-VMSwitch WSL -NetAdapterName $active[0].Name ;
         $started = $true ;
         # Hook all Hyper V VMs to WSL network => avoid network performance issues.
         Write-Output  "Getting all Hyper V machines to use WSL Switch" >> $logPath ; 
