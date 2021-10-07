@@ -67,5 +67,44 @@ And the Bridge has been removed too.
     ~~~
 
 Why did it not use the existing one? 
-And why is 'Delete' disabled in the Control Panel view of net adapters?
+And why is 'Delete' disabled in the Control Panel view of net adapters? And while there are psh commands for Get/Set and Enable/Disable-NetAdapter there are now remove or delete cmdlets. A curious ommission.
+
+Ok, let's try reset script again with this clean slate:
+
+```
+PS C:\Users\mhwilkie\code\WSL2-Network-Fix> .\resetWindowsNet.ps1                                   
+WSL Network found: VMSwitch (Name = 'WSL') [Id = '29d473f4-ca3a-4db2-9199-df69fb29c066']            
+Set-VMSwitch : Adding ports to the switch 'WSL' failed.                                             
+The operation failed because the object was not found.                                              
+At C:\Users\mhwilkie\code\WSL2-Network-Fix\resetWindowsNet.ps1:76 char:9                            
++         Set-VMSwitch WSL -NetAdapterName $active[0].Name ;                                        
++         ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~                                          
+    + CategoryInfo          : ObjectNotFound: (:) [Set-VMSwitch], VirtualizationException           
+    + FullyQualifiedErrorId : ObjectNotFound,Microsoft.HyperV.PowerShell.Commands.SetVMSwitch       
+                                                                                                    
+Press Enter to continue...:                                                                         
+                                                                                                    
+Handles  NPM(K)    PM(K)      WS(K)     CPU(s)     Id  SI ProcessName                               
+-------  ------    -----      -----     ------     --  -- -----------                               
+    202      14     4692      11020       0.16  18048   1 wsl                                       
+    202      14     4692      11020       0.16  18048   1 wsl                                       
+0                                                                                                   
+```
+
+So last error was _Element_ not found and this one is _Object_ not found.
+
+```
+Name                      InterfaceDescription                    ifIndex Status       MacAddress             LinkSpeed
+----                      --------------------                    ------- ------       ----------             ---------
+vEthernet (WSL)           Hyper-V Virtual Ethernet Adapter #2          22              00-15-5D-D7-FF-55          0 bps
+VirtualBox Host-Only N... VirtualBox Host-Only Ethernet Adapter        19 Up           0A-00-27-00-00-13         1 Gbps
+Network Bridge            Microsoft Network Adapter Multiplexo...      40 Up           10-5B-AD-32-3F-0B     144.4 Mbps
+Wi-Fi                     Qualcomm(R) QCA6174A Extended Range ...      17 Up           10-5B-AD-32-3F-0B     144.4 Mbps
+Ethernet 3                Check Point Virtual Network Adapter ...      13 Disconnected 54-5B-B3-13-42-0F         1 Gbps
+vEthernet (WSL) 2         Hyper-V Virtual Ethernet Adapter #4          66 Up           00-15-5D-AE-88-1D        10 Gbps
+vEthernet (Default Sw...2 Hyper-V Virtual Ethernet Adapter #3          58 Up           00-15-5D-64-10-2C        10 Gbps
+vEthernet (Default Swi... Hyper-V Virtual Ethernet Adapter              8              00-15-5D-AA-CE-BD          0 bps
+```
+
+Also, our Bridge is back. So now we know it's *Set-VMSwitch* that creates it and not Network Troubleshooter like I'd surmised earlier,
 
