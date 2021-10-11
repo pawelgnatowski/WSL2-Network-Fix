@@ -61,7 +61,7 @@ Do {
         $started = $true; 
         # manipulate network adapter tickboxes - Adapter cannot be bound because binding to Hyper-V is still there after M$ windows restarts.
         # Get-NetAdapterBinding Ethernet to view components of the interface vms_pp is what we look for
-        # Set-NetAdapterBinding -Name "Ethernet" -ComponentID vms_pp -Enabled $False ;
+        ## Set-NetAdapterBinding -Name "Ethernet" -ComponentID vms_pp -Enabled $False ;
 
         # identify non-virtual adapters with active network connection
         # $active[0] will be 1st net adapter in list while $active.[-1] will be last one
@@ -72,20 +72,25 @@ Do {
         ## Set-NetAdapterBinding -Name "Ethernet" -ComponentID vms_pp -Enabled $False ;
         Set-NetAdapterBinding -Name $active[0].Name -ComponentID vms_pp -Enabled $False ;
 
-        #Set-VMSwitch WSL -NetAdapterName "Ethernet" ;
-        Set-VMSwitch WSL -NetAdapterName $active[0].Name ;
+        # Launch as background job, in order to dis- and re-enable adapter at same time
+        # (workaround #9 https://github.com/pawelgnatowski/WSL2-Network-Fix/issues/9)
+        ##Set-VMSwitch WSL -NetAdapterName "Ethernet" ;
+        $job = Start-Job -ScriptBlock {
+            Set-VMSwitch WSL -NetAdapterName $active[0].Name
+            } ;
 
         # Cycle the adapter state to ensure connection still active, mitigates Issue #8: No network after Set-VMSwitch WSL ...
         # https://github.com/pawelgnatowski/WSL2-Network-Fix/issues/8
         Disable-NetAdapter  -Name $active[0].Name -Confirm:$false ;
         Enable-NetAdapter -Name $active[0].Name ;
 
+        Wait-Job -ID $job.Id 
+
         $started = $true ;
         # Hook all Hyper V VMs to WSL network => avoid network performance issues.
         Write-Output  "Getting all Hyper V machines to use WSL Switch" >> $logPath ; 
         Get-VM | Get-VMNetworkAdapter | Connect-VMNetworkAdapter -SwitchName "WSL" ; 
         # now that host network is configured we can set up wsl network
-        Pause
         ConfigureWSLNetwork ;
         # Start All Hyper VMs
         Get-VM | Start-VM ;
