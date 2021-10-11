@@ -40,6 +40,31 @@ function ConfigureWSLNetwork {
     
 }
 
+function ConfigureSwitch {
+
+    
+    <#
+    .Description
+    Launch setting the VM switch as a background job, in order to disable and re-enable network adapter at same time. 
+    Works around issues:
+        #8: No network after Set-VMSwitch WSL, https://github.com/pawelgnatowski/WSL2-Network-Fix/issues/8
+        #9: Set-VMSwitch : Failed while adding virtual Ethernet switch connections, https://github.com/pawelgnatowski/WSL2-Network-Fix/issues/9
+    #>
+    param ($adapter)
+    
+    Write-Output "Configuring the Virtual Machine network switch..." >> $logPath
+    
+    $job = Start-Job -ScriptBlock {
+        Set-VMSwitch WSL -NetAdapterName $adapter.Name
+        } ;
+
+    Disable-NetAdapter  -Name $adapter.Name -Confirm:$false ;
+    Enable-NetAdapter -Name $adapter.Name ;
+
+    Wait-Job -ID $job.Id 
+
+
+}
 
 #  force launch without going to bash prompt
 wsl exit
@@ -72,19 +97,8 @@ Do {
         ## Set-NetAdapterBinding -Name "Ethernet" -ComponentID vms_pp -Enabled $False ;
         Set-NetAdapterBinding -Name $active[0].Name -ComponentID vms_pp -Enabled $False ;
 
-        # Launch as background job, in order to dis- and re-enable adapter at same time
-        # (workaround #9 https://github.com/pawelgnatowski/WSL2-Network-Fix/issues/9)
-        ##Set-VMSwitch WSL -NetAdapterName "Ethernet" ;
-        $job = Start-Job -ScriptBlock {
-            Set-VMSwitch WSL -NetAdapterName $active[0].Name
-            } ;
-
-        # Cycle the adapter state to ensure connection still active, mitigates Issue #8: No network after Set-VMSwitch WSL ...
-        # https://github.com/pawelgnatowski/WSL2-Network-Fix/issues/8
-        Disable-NetAdapter  -Name $active[0].Name -Confirm:$false ;
-        Enable-NetAdapter -Name $active[0].Name ;
-
-        Wait-Job -ID $job.Id 
+        # configure the vm network switch
+        ConfigureSwitch -Adapter $active[0] ;
 
         $started = $true ;
         # Hook all Hyper V VMs to WSL network => avoid network performance issues.
