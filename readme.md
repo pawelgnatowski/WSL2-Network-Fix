@@ -1,4 +1,9 @@
 ---------- new way as of 4th Feb 2024, latest windows patch stable
+to make it work use Hyper-V Networking manager to set WSL network adapter to External
+(hyper v might complain - close it and try again, should apply changes)
+FYI i have two lan cards - so it can make my life easier as I bind WSL to separate LAN, try it though.
+
+
 
 use stertWsl.sh file
 in /etc/wsl.conf
