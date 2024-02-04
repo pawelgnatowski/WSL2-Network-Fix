@@ -1,3 +1,34 @@
+---------- new way as of 4th Feb 2024, latest windows patch stable
+
+use stertWsl.sh file
+in /etc/wsl.conf
+
+[boot]
+systemd=true
+# Network host settings that enable the DNS server used by WSL 2. This example changes the hostname, sets generateHosts to false, preventing WSL from the default behavior of auto-generating /etc/hosts, and sets generateResolvConf to false, preventing WSL from auto-generating /etc/resolv.conf, so that you can create your own (ie. nameserver 1.1.1.1).
+[network]
+hostname = WslUbuntu
+
+# generateHosts = false
+# generateResolvConf = false
+
+# Set whether WSL supports interop processes like launching Windows apps and adding path variables. Setting these to false will block the launch of Windows processes and block adding $PATH environment variables.
+[interop]
+#enabled = false
+appendWindowsPath = false
+
+# # Set the user when launching a distribution with WSL.
+# [user]
+# default = DemoUser
+
+# Set a command to run when a new WSL instance launches. This example starts the Docker container service.
+[boot]
+command = /home/wsluser/startWsl.sh
+
+Should work at least for TCPv4 traffic. Tried http - worked.
+
+
+_______________this is very old way_______________
 How to run WSL2 and Hyper-V VMs as if your Linux was normal VM, with own ip address:
 no redirects needed. no *special* software. 
 As it should have been from the start. or As if MS decided not to overwrite your config every single reboot.
